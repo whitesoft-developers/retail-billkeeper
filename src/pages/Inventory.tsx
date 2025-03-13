@@ -66,7 +66,7 @@ const Inventory = () => {
             
             <div className="divide-y">
               {filteredInventory.map((item) => (
-                <div key={item.id} className="grid grid-cols-6 py-3 items-center">
+                <div key={item.productId} className="grid grid-cols-6 py-3 items-center">
                   <div className="col-span-2 font-medium">{item.product?.name}</div>
                   <div className="text-muted-foreground">{item.product?.category || 'N/A'}</div>
                   <div>₹{item.product?.price.toFixed(2)}</div>

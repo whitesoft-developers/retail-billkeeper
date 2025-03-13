@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,29 @@ const Settings = () => {
   const { storeInfo, updateStoreInfo, loading } = useStoreSettings();
   
   const [storeSettings, setStoreSettings] = useState({
-    name: storeInfo?.name || '',
-    address: storeInfo?.address || '',
-    phone: storeInfo?.phone || '',
-    email: storeInfo?.email || '',
-    upiId: storeInfo?.upiId || '',
-    gstNumber: storeInfo?.gstNumber || '',
+    id: 'storeInfo',
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    upiId: '',
+    gst: '',
   });
+  
+  // Update form when storeInfo is loaded
+  useEffect(() => {
+    if (storeInfo) {
+      setStoreSettings({
+        id: storeInfo.id,
+        name: storeInfo.name,
+        address: storeInfo.address,
+        phone: storeInfo.phone,
+        email: storeInfo.email,
+        upiId: storeInfo.upiId,
+        gst: storeInfo.gst,
+      });
+    }
+  }, [storeInfo]);
   
   const handleSaveSettings = async () => {
     // Validate UPI ID
@@ -112,11 +128,11 @@ const Settings = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="gstNumber">GST Number</Label>
+                  <Label htmlFor="gst">GST Number</Label>
                   <Input
-                    id="gstNumber"
-                    name="gstNumber"
-                    value={storeSettings.gstNumber}
+                    id="gst"
+                    name="gst"
+                    value={storeSettings.gst}
                     onChange={handleInputChange}
                     placeholder="Enter GST number"
                   />
