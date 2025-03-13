@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -58,10 +57,12 @@ export const initDatabase = async () => {
         billsStore.createIndex('billNumber', 'billNumber', { unique: true });
       } else if (oldVersion < 2) {
         // Add billNumber index if upgrading
-        const transaction = (event.target as IDBOpenDBRequest).transaction;
-        const billsStore = transaction?.objectStore('bills');
-        if (billsStore && !billsStore.indexNames.contains('billNumber')) {
-          billsStore.createIndex('billNumber', 'billNumber', { unique: true });
+        const dbTransaction = (event.target as IDBOpenDBRequest).transaction;
+        if (dbTransaction) {
+          const billsStore = dbTransaction.objectStore('bills');
+          if (billsStore && !billsStore.indexNames.contains('billNumber')) {
+            billsStore.createIndex('billNumber', 'billNumber', { unique: true });
+          }
         }
       }
       
@@ -72,14 +73,14 @@ export const initDatabase = async () => {
       
       // Add example data (for development only)
       if (oldVersion === 0) {
-        const transaction = (event.target as IDBOpenDBRequest).transaction;
+        const dbTransaction = (event.target as IDBOpenDBRequest).transaction;
         
-        if (transaction) {
-          const productStore = transaction.objectStore('products');
-          const inventoryStore = transaction.objectStore('inventory');
-          const settingsStore = transaction.objectStore('settings');
+        if (dbTransaction) {
+          const productStore = dbTransaction.objectStore('products');
+          const inventoryStore = dbTransaction.objectStore('inventory');
+          const settingsStore = dbTransaction.objectStore('settings');
 
-          // Add sample products
+          // Add sample products and inventory
           [
             { id: 1, name: 'Paracetamol', category: 'medical', price: 15.50, barcode: '8901234567890', hsn: '30049099', cgst: 9, sgst: 9 },
             { id: 2, name: 'USB Cable', category: 'electronics', price: 199.99, barcode: '8901234567891', hsn: '85444999', cgst: 9, sgst: 9 },

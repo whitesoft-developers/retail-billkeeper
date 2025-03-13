@@ -40,7 +40,9 @@ const InventoryFormDialog = ({
         quantity: inventoryItem.quantity,
         location: inventoryItem.location,
         lowStockThreshold: inventoryItem.lowStockThreshold,
-        batchId: inventoryItem.batchId
+        batchId: inventoryItem.batchId,
+        expiryDate: inventoryItem.expiryDate,
+        purchaseDate: inventoryItem.purchaseDate
       });
     } else if (productId) {
       // Reset form when adding new inventory for a product

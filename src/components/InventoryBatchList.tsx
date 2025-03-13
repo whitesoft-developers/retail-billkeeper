@@ -1,12 +1,12 @@
 
-import { useState } from 'react';
-import { InventoryItem, Product } from '@/lib/db';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, AlertTriangle, CheckCircle, X } from 'lucide-react';
-import { formatDistanceToNow, format, isPast, isAfter, addDays } from 'date-fns';
-import AddStockForm from './AddStockForm';
+import { Badge } from '@/components/ui/badge';
+import { InventoryItem, Product } from '@/lib/db';
+import { format } from 'date-fns';
+import { isAfter, isBefore, addDays } from 'date-fns';
+import { toast } from 'sonner';
 
 interface InventoryBatchListProps {
   inventoryItems: (InventoryItem & { product?: Product })[];
@@ -15,114 +15,123 @@ interface InventoryBatchListProps {
   onRefresh: () => void;
 }
 
-const InventoryBatchList = ({ inventoryItems, product, onEditInventory, onRefresh }: InventoryBatchListProps) => {
-  const [addStockOpen, setAddStockOpen] = useState(false);
+const InventoryBatchList = ({ 
+  inventoryItems, 
+  product, 
+  onEditInventory,
+  onRefresh
+}: InventoryBatchListProps) => {
+  // Filter inventory items for this product
+  const filteredItems = inventoryItems.filter(item => item.productId === product.id);
   
+  // Determine expiry status
   const getExpiryStatus = (expiryDate?: Date) => {
-    if (!expiryDate) return { status: 'none', label: 'No expiry' };
+    if (!expiryDate) return { status: 'ok', label: 'No Expiry' };
     
-    const today = new Date();
+    const now = new Date();
     const expiry = new Date(expiryDate);
     
-    if (isPast(expiry)) {
+    // Check if already expired
+    if (isBefore(expiry, now)) {
       return { status: 'expired', label: 'Expired' };
     }
     
-    if (isAfter(addDays(today, 30), expiry)) {
-      return { status: 'expiring-soon', label: 'Expiring soon' };
+    // Check if expiring in 30 days
+    if (isBefore(expiry, addDays(now, 30))) {
+      return { status: 'expiring', label: 'Expiring Soon' };
     }
     
-    return { status: 'valid', label: 'Valid' };
+    return { status: 'ok', label: 'Valid' };
   };
   
-  const filteredItems = inventoryItems.filter(item => item.productId === product.id);
+  // Map expiry status to badge variant
+  const getExpiryBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'expired':
+        return 'destructive';
+      case 'expiring':
+        return 'secondary'; // Changed from 'warning' to 'secondary'
+      default:
+        return 'outline';
+    }
+  };
+  
+  if (filteredItems.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-muted-foreground mb-4">No inventory batches found for this product.</p>
+        <Button size="sm" onClick={onRefresh}>Refresh</Button>
+      </div>
+    );
+  }
   
   return (
-    <>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">{product.name} - Inventory</h3>
-        <Button onClick={() => setAddStockOpen(true)}>Add Stock</Button>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          Total Quantity: {filteredItems.reduce((sum, item) => sum + item.quantity, 0)}
+        </p>
+        <Button size="sm" variant="outline" onClick={onRefresh}>Refresh</Button>
       </div>
       
-      {filteredItems.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Batch ID</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Expiry Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredItems.map((item) => {
-              const expiryStatus = getExpiryStatus(item.expiryDate);
-              
-              return (
-                <TableRow key={`${item.productId}-${item.location}-${item.batchId}`}>
-                  <TableCell>{item.batchId}</TableCell>
-                  <TableCell>{item.location}</TableCell>
-                  <TableCell className={item.quantity <= (item.lowStockThreshold || 5) ? 'text-red-500 font-medium' : ''}>
-                    {item.quantity}
-                  </TableCell>
-                  <TableCell>
-                    {item.expiryDate ? format(new Date(item.expiryDate), 'dd/MM/yyyy') : 'N/A'}
-                    {item.expiryDate && (
-                      <div className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(item.expiryDate), { addSuffix: true })}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {expiryStatus.status === 'expired' && (
-                      <Badge variant="destructive" className="flex items-center gap-1">
-                        <X className="h-3 w-3" />
-                        {expiryStatus.label}
-                      </Badge>
-                    )}
-                    {expiryStatus.status === 'expiring-soon' && (
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        {expiryStatus.label}
-                      </Badge>
-                    )}
-                    {expiryStatus.status === 'valid' && (
-                      <Badge variant="outline" className="bg-green-100 text-green-800 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        {expiryStatus.label}
-                      </Badge>
-                    )}
-                    {expiryStatus.status === 'none' && (
-                      <Badge variant="outline">{expiryStatus.label}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => onEditInventory(item)}>
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center py-8 border rounded-md">
-          <p className="text-muted-foreground">No inventory found for this product</p>
-          <Button className="mt-4" onClick={() => setAddStockOpen(true)}>Add Stock</Button>
-        </div>
-      )}
-      
-      <AddStockForm 
-        open={addStockOpen} 
-        onOpenChange={setAddStockOpen} 
-        product={product} 
-        onComplete={onRefresh}
-      />
-    </>
+      <div className="grid gap-4">
+        {filteredItems.map((item) => {
+          const expiryStatus = getExpiryStatus(item.expiryDate);
+          
+          return (
+            <Card key={`${item.productId}-${item.location}-${item.batchId}`}>
+              <CardHeader className="py-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-base">{item.location}</CardTitle>
+                    <CardDescription className="text-xs">Batch: {item.batchId}</CardDescription>
+                  </div>
+                  <Badge variant={getExpiryBadgeVariant(expiryStatus.status)}>
+                    {expiryStatus.label}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="py-2">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Quantity:</span>
+                    <span className="ml-2 font-medium">{item.quantity}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Threshold:</span>
+                    <span className="ml-2">{item.lowStockThreshold}</span>
+                  </div>
+                  
+                  {item.purchaseDate && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Purchased:</span>
+                      <span className="ml-2">{format(new Date(item.purchaseDate), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
+                  
+                  {item.expiryDate && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Expires:</span>
+                      <span className="ml-2">{format(new Date(item.expiryDate), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="py-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full"
+                  onClick={() => onEditInventory(item)}
+                >
+                  Edit
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 

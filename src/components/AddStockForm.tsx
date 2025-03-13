@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInventory, Product, InventoryItem } from '@/lib/db';
 import { toast } from 'sonner';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -18,7 +17,7 @@ interface AddStockFormProps {
 }
 
 const AddStockForm = ({ open, onOpenChange, product, onComplete }: AddStockFormProps) => {
-  const { addInventoryBatch } = useInventory();
+  const { addInventoryBatch, inventory } = useInventory(false, true);
   
   const [quantity, setQuantity] = useState<number>(1);
   const [location, setLocation] = useState<string>('');
@@ -41,18 +40,29 @@ const AddStockForm = ({ open, onOpenChange, product, onComplete }: AddStockFormP
     }
     
     try {
-      const newBatch: InventoryItem = {
-        productId: product.id!,
-        quantity,
-        location,
-        batchId,
-        expiryDate,
-        purchaseDate,
-        lowStockThreshold
-      };
+      // Split locations by comma and create separate batch entries
+      const locations = location.split(',').map(loc => loc.trim()).filter(loc => loc);
       
-      await addInventoryBatch(newBatch);
-      toast.success(`Added ${quantity} units of ${product.name} to inventory`);
+      if (locations.length === 0) {
+        toast.error('At least one valid location is required');
+        return;
+      }
+      
+      for (const loc of locations) {
+        const newBatch: InventoryItem = {
+          productId: product.id!,
+          quantity,
+          location: loc,
+          batchId,
+          expiryDate,
+          purchaseDate,
+          lowStockThreshold
+        };
+        
+        await addInventoryBatch(newBatch);
+      }
+      
+      toast.success(`Added ${quantity} units of ${product.name} to ${locations.length} location(s)`);
       onOpenChange(false);
       onComplete();
       
@@ -90,12 +100,17 @@ const AddStockForm = ({ open, onOpenChange, product, onComplete }: AddStockFormP
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">
+                Location(s)
+                <span className="text-xs block text-muted-foreground">
+                  Separate multiple locations with commas
+                </span>
+              </Label>
               <Input
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g., Shelf A-1"
+                placeholder="e.g., Shelf A-1, Box B-2"
                 required
               />
             </div>
