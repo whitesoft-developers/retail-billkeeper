@@ -104,6 +104,8 @@ export interface Product {
   price: number;
   barcode: string;
   hsn: string;
+  cgst: number;
+  sgst: number;
 }
 
 // Inventory type
@@ -129,7 +131,10 @@ export interface Bill {
   customer?: {
     name?: string;
     phone?: string;
+    email?: string;
+    address?: string;
   };
+  billNumber?: string;
 }
 
 // Bill item type
@@ -140,6 +145,8 @@ export interface BillItem {
   quantity: number;
   hsn: string;
   amount: number;
+  cgst: number;
+  sgst: number;
 }
 
 // Store Info type
@@ -151,6 +158,9 @@ export interface StoreInfo {
   email: string;
   gst: string;
   upiId: string;
+  logo?: string;
+  billWidth: number;
+  billHeight: number;
 }
 
 // Generic database operation - Get all items from a store

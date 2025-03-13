@@ -28,12 +28,18 @@ const ProductFormDialog = ({
     price: 0,
     barcode: '',
     hsn: '',
+    cgst: 9,
+    sgst: 9,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (product) {
-      setFormData(product);
+      setFormData({
+        ...product,
+        cgst: product.cgst ?? 9,
+        sgst: product.sgst ?? 9
+      });
     } else {
       // Reset form when adding new product
       setFormData({
@@ -42,6 +48,8 @@ const ProductFormDialog = ({
         price: 0,
         barcode: '',
         hsn: '',
+        cgst: 9,
+        sgst: 9,
       });
     }
   }, [product, open]);
@@ -50,7 +58,7 @@ const ProductFormDialog = ({
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' ? parseFloat(value) || 0 : value,
+      [name]: ['price', 'cgst', 'sgst'].includes(name) ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -127,6 +135,36 @@ const ProductFormDialog = ({
               placeholder="Enter price"
               required
             />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cgst">CGST (%)</Label>
+              <Input
+                id="cgst"
+                name="cgst"
+                type="number"
+                min="0"
+                step="0.5"
+                value={formData.cgst}
+                onChange={handleChange}
+                placeholder="CGST"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="sgst">SGST (%)</Label>
+              <Input
+                id="sgst"
+                name="sgst"
+                type="number"
+                min="0"
+                step="0.5"
+                value={formData.sgst}
+                onChange={handleChange}
+                placeholder="SGST"
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
