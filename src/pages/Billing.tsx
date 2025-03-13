@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,10 +43,12 @@ const Billing = () => {
   
   const printBillRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
-    content: () => printBillRef.current,
+    documentTitle: "Bill Receipt",
+    onBeforeGetContent: () => Promise.resolve(),
+    onAfterPrint: () => console.log("Printed successfully"),
+    removeAfterPrint: true,
   });
   
-  // Generate unique bill number
   const generateBillNumber = () => {
     const date = new Date();
     const prefix = 'INV';
@@ -58,7 +59,6 @@ const Billing = () => {
     return `${prefix}${year}${month}${day}${random}`;
   };
   
-  // Bill calculations
   const calculateBill = () => {
     const subtotal = billItems.reduce((sum, item) => sum + item.amount, 0);
     const taxAmount = billItems.reduce((sum, item) => {
@@ -76,7 +76,6 @@ const Billing = () => {
   
   const { subtotal, taxAmount, total } = calculateBill();
   
-  // Filter products based on search term
   const filteredProducts = searchTerm
     ? products.filter(product => 
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,14 +84,12 @@ const Billing = () => {
       )
     : products;
   
-  // Filter products that have inventory
   const productsWithInventory = filteredProducts.filter(product => {
     const inventoryItems = inventory.filter(item => item.productId === product.id);
     const totalQuantity = inventoryItems.reduce((sum, item) => sum + item.quantity, 0);
     return totalQuantity > 0;
   });
   
-  // Filter bills based on search or date range
   const getFilteredBills = () => {
     let filtered = [...bills];
     
@@ -102,7 +99,6 @@ const Billing = () => {
         (bill.id && bill.id.toString().includes(billSearchTerm))
       );
     } else {
-      // Apply date filters
       filtered = filtered.filter(bill => {
         const billDate = new Date(bill.date);
         return billDate >= dateRange.from && billDate <= endOfDay(dateRange.to);
@@ -114,7 +110,6 @@ const Billing = () => {
   
   const filteredBills = getFilteredBills();
   
-  // Handle date range selection for insights
   useEffect(() => {
     const now = new Date();
     
@@ -136,11 +131,9 @@ const Billing = () => {
   }, [insightPeriod]);
   
   const handleAddToBill = (product: Product, quantity: number) => {
-    // Check if product already in bill
     const existingItemIndex = billItems.findIndex(item => item.productId === product.id);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
       const updatedItems = [...billItems];
       const newQuantity = updatedItems[existingItemIndex].quantity + quantity;
       updatedItems[existingItemIndex] = {
@@ -150,7 +143,6 @@ const Billing = () => {
       };
       setBillItems(updatedItems);
     } else {
-      // Add new item
       const newItem: BillItem = {
         productId: product.id!,
         name: product.name,
@@ -188,19 +180,16 @@ const Billing = () => {
   
   const updateInventoryQuantity = async () => {
     for (const item of billItems) {
-      // Get all inventory locations for this product
       const locations = inventory.filter(inv => inv.productId === item.productId);
       
       let remainingQuantity = item.quantity;
       
-      // Deduct from each location until quantity is fulfilled
       for (const location of locations) {
         if (remainingQuantity <= 0) break;
         
         const deductAmount = Math.min(location.quantity, remainingQuantity);
         remainingQuantity -= deductAmount;
         
-        // Update inventory
         await updateInventoryItem({
           ...location,
           quantity: location.quantity - deductAmount
@@ -223,14 +212,11 @@ const Billing = () => {
     }
     
     try {
-      // Check and update inventory
       const inventoryUpdated = await updateInventoryQuantity();
       if (!inventoryUpdated) return;
       
-      // Generate bill number
       const billNumber = generateBillNumber();
       
-      // Create bill
       const bill: Bill = {
         date: new Date(),
         items: billItems,
@@ -252,14 +238,12 @@ const Billing = () => {
       const createdBill = await addBill(bill);
       setSelectedBill({...bill, id: createdBill as number});
       
-      // Show QR code for UPI payment
       if (paymentMethod === 'upi') {
         setShowQRCode(true);
       }
       
       toast.success(`Bill ${billNumber} created successfully`);
       
-      // Reset form after short delay to allow user to see the success message
       setTimeout(() => {
         setBillItems([]);
         setCustomerName('');
@@ -267,7 +251,6 @@ const Billing = () => {
         setCustomerEmail('');
         setCustomerAddress('');
         
-        // Auto print if it's a completed transaction
         if (paymentMethod !== 'upi' || (paymentMethod === 'upi' && showQRCode)) {
           handlePrint();
         }
@@ -282,9 +265,7 @@ const Billing = () => {
     setSelectedBill(bill);
   };
   
-  // Prepare data for insights charts
   const getSalesData = () => {
-    // For this example, we'll create daily sales data
     const salesByDay = new Map();
     const salesByCategory = new Map();
     
@@ -293,7 +274,6 @@ const Billing = () => {
       const currentTotal = salesByDay.get(date) || 0;
       salesByDay.set(date, currentTotal + bill.total);
       
-      // Aggregate by category
       bill.items.forEach(item => {
         const product = products.find(p => p.id === item.productId);
         if (product) {
@@ -304,13 +284,11 @@ const Billing = () => {
       });
     });
     
-    // Convert to array format for recharts
     const dailyData = Array.from(salesByDay.entries()).map(([date, total]) => ({
       date,
       total
     })).sort((a, b) => a.date.localeCompare(b.date));
     
-    // Convert category data for pie chart
     const categoryData = Array.from(salesByCategory.entries()).map(([category, total]) => ({
       category,
       value: total
@@ -321,15 +299,12 @@ const Billing = () => {
   
   const { dailyData, categoryData } = getSalesData();
   
-  // Calculate total sales and other metrics
   const totalSales = filteredBills.reduce((sum, bill) => sum + bill.total, 0);
   const totalTransactions = filteredBills.length;
   const averageTransactionValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
   
-  // Colors for pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   
-  // Print functionality
   const handleSearchBill = () => {
     if (!billSearchTerm) return;
     
@@ -711,7 +686,6 @@ const Billing = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Hidden bill print component */}
       <div className="hidden">
         {selectedBill && storeInfo && (
           <div ref={printBillRef}>
@@ -723,10 +697,7 @@ const Billing = () => {
   );
 };
 
-// Helper function to get top selling products
 function getTopSellingProducts() {
-  // This would normally aggregate data from bills to find top products
-  // For demonstration, returning a placeholder
   return (
     <p className="text-sm text-muted-foreground">
       No sales data available for this period.
