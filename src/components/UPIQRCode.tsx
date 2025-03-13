@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { generateUPIQRCode, UPIPayment } from '@/lib/upiUtils';
 import { Card } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { useStoreSettings } from '@/lib/db';
 import { IndianRupee, Copy, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 interface UPIQRCodeProps {
   amount: number;
