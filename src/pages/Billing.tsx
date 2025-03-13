@@ -44,9 +44,14 @@ const Billing = () => {
   const printBillRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
     documentTitle: "Bill Receipt",
-    onBeforeGetContent: () => Promise.resolve(),
-    onAfterPrint: () => console.log("Printed successfully"),
+    onBeforeGetContent: () => {
+      return Promise.resolve();
+    },
+    onAfterPrint: () => {
+      console.log("Printed successfully");
+    },
     removeAfterPrint: true,
+    content: () => printBillRef.current
   });
   
   const generateBillNumber = () => {
@@ -240,6 +245,7 @@ const Billing = () => {
       
       if (paymentMethod === 'upi') {
         setShowQRCode(true);
+        setBillId(createdBill as number);
       }
       
       toast.success(`Bill ${billNumber} created successfully`);

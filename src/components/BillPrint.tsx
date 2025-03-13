@@ -17,7 +17,7 @@ const BillPrint = forwardRef<HTMLDivElement, BillPrintProps>(({ bill, storeInfo 
     <div 
       ref={ref} 
       className="thermal-bill bg-white p-2 text-black text-sm" 
-      style={{ width: `${storeInfo.billWidth}mm`, minHeight: `${storeInfo.billHeight}mm` }}
+      style={{ width: `${storeInfo.billWidth || 80}mm`, minHeight: `${storeInfo.billHeight || 140}mm` }}
     >
       <div className="text-center mb-3">
         {storeInfo.logo && (

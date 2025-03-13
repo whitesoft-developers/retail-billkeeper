@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { generateUPIQRCode, UPIPayment } from '@/lib/upiUtils';
 import { Card } from '@/components/ui/card';

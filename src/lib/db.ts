@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -13,7 +12,7 @@ export const initDatabase = async () => {
     }
 
     // Open the database
-    const request = window.indexedDB.open('RetailBillingDB', 1);
+    const request = window.indexedDB.open('RetailBillingDB', 2);
 
     request.onerror = (event) => {
       toast.error("Database error: Unable to open database");
@@ -23,6 +22,7 @@ export const initDatabase = async () => {
     // Create the schema if needed
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      const oldVersion = event.oldVersion;
       
       // Create Products store
       if (!db.objectStoreNames.contains('products')) {
@@ -34,9 +34,19 @@ export const initDatabase = async () => {
       
       // Create Inventory store
       if (!db.objectStoreNames.contains('inventory')) {
-        const inventoryStore = db.createObjectStore('inventory', { keyPath: 'productId' });
+        const inventoryStore = db.createObjectStore('inventory', { keyPath: ['productId', 'location', 'batchId'] });
         inventoryStore.createIndex('quantity', 'quantity', { unique: false });
         inventoryStore.createIndex('location', 'location', { unique: false });
+        inventoryStore.createIndex('expiryDate', 'expiryDate', { unique: false });
+        inventoryStore.createIndex('batchId', 'batchId', { unique: false });
+      } else if (oldVersion < 2) {
+        // Upgrade inventory store if we're upgrading from version 1
+        db.deleteObjectStore('inventory');
+        const inventoryStore = db.createObjectStore('inventory', { keyPath: ['productId', 'location', 'batchId'] });
+        inventoryStore.createIndex('quantity', 'quantity', { unique: false });
+        inventoryStore.createIndex('location', 'location', { unique: false });
+        inventoryStore.createIndex('expiryDate', 'expiryDate', { unique: false });
+        inventoryStore.createIndex('batchId', 'batchId', { unique: false });
       }
       
       // Create Bills store
@@ -44,6 +54,14 @@ export const initDatabase = async () => {
         const billsStore = db.createObjectStore('bills', { keyPath: 'id', autoIncrement: true });
         billsStore.createIndex('date', 'date', { unique: false });
         billsStore.createIndex('total', 'total', { unique: false });
+        billsStore.createIndex('billNumber', 'billNumber', { unique: true });
+      } else if (oldVersion < 2) {
+        // Add billNumber index if upgrading
+        const transaction = event.target.transaction;
+        const billsStore = transaction?.objectStore('bills');
+        if (billsStore && !billsStore.indexNames.contains('billNumber')) {
+          billsStore.createIndex('billNumber', 'billNumber', { unique: true });
+        }
       }
       
       // Create Settings store
@@ -52,40 +70,50 @@ export const initDatabase = async () => {
       }
       
       // Add example data (for development only)
-      const transaction = (event.target as IDBOpenDBRequest).transaction;
-      
-      if (transaction) {
-        const productStore = transaction.objectStore('products');
-        const inventoryStore = transaction.objectStore('inventory');
-        const settingsStore = transaction.objectStore('settings');
-
-        // Add sample products
-        [
-          { id: 1, name: 'Paracetamol', category: 'medical', price: 15.50, barcode: '8901234567890', hsn: '30049099' },
-          { id: 2, name: 'USB Cable', category: 'electronics', price: 199.99, barcode: '8901234567891', hsn: '85444999' },
-          { id: 3, name: 'Rice 1kg', category: 'grocery', price: 60.00, barcode: '8901234567892', hsn: '10063090' },
-        ].forEach(product => {
-          productStore.add(product);
-          
-          // Add inventory entry for each product
-          inventoryStore.add({
-            productId: product.id,
-            quantity: Math.floor(Math.random() * 50) + 5,
-            location: `Shelf ${String.fromCharCode(65 + Math.floor(Math.random() * 5))}-${Math.floor(Math.random() * 10) + 1}`,
-            lowStockThreshold: 10
-          });
-        });
+      if (oldVersion === 0) {
+        const transaction = (event.target as IDBOpenDBRequest).transaction;
         
-        // Add default settings
-        settingsStore.add({
-          id: 'storeInfo',
-          name: 'My Retail Store',
-          address: '123 Market Street, City',
-          phone: '9876543210',
-          email: 'store@example.com',
-          gst: '22AAAAA0000A1Z5',
-          upiId: 'store@upi'
-        });
+        if (transaction) {
+          const productStore = transaction.objectStore('products');
+          const inventoryStore = transaction.objectStore('inventory');
+          const settingsStore = transaction.objectStore('settings');
+
+          // Add sample products
+          [
+            { id: 1, name: 'Paracetamol', category: 'medical', price: 15.50, barcode: '8901234567890', hsn: '30049099', cgst: 9, sgst: 9 },
+            { id: 2, name: 'USB Cable', category: 'electronics', price: 199.99, barcode: '8901234567891', hsn: '85444999', cgst: 9, sgst: 9 },
+            { id: 3, name: 'Rice 1kg', category: 'grocery', price: 60.00, barcode: '8901234567892', hsn: '10063090', cgst: 5, sgst: 5 },
+          ].forEach(product => {
+            productStore.add(product);
+            
+            // Add inventory entry for each product
+            const today = new Date();
+            const expiryDate = new Date();
+            expiryDate.setMonth(today.getMonth() + 6); // 6 months expiry for sample
+            
+            inventoryStore.add({
+              productId: product.id,
+              quantity: Math.floor(Math.random() * 50) + 5,
+              location: `Shelf ${String.fromCharCode(65 + Math.floor(Math.random() * 5))}-${Math.floor(Math.random() * 10) + 1}`,
+              lowStockThreshold: 10,
+              batchId: 'BATCH-' + Math.floor(Math.random() * 1000),
+              expiryDate: expiryDate
+            });
+          });
+          
+          // Add default settings
+          settingsStore.add({
+            id: 'storeInfo',
+            name: 'My Retail Store',
+            address: '123 Market Street, City',
+            phone: '9876543210',
+            email: 'store@example.com',
+            gst: '22AAAAA0000A1Z5',
+            upiId: 'store@upi',
+            billWidth: 80,
+            billHeight: 140
+          });
+        }
       }
     };
 
@@ -114,6 +142,9 @@ export interface InventoryItem {
   quantity: number;
   location: string;
   lowStockThreshold: number;
+  batchId: string;
+  expiryDate?: Date;
+  purchaseDate?: Date;
 }
 
 // Bill type
@@ -147,6 +178,7 @@ export interface BillItem {
   amount: number;
   cgst: number;
   sgst: number;
+  batchId?: string;
 }
 
 // Store Info type
@@ -371,7 +403,7 @@ export const useProducts = (filter?: { category?: string; query?: string }) => {
 };
 
 // Custom hook for retrieving and managing inventory
-export const useInventory = (lowStockOnly = false) => {
+export const useInventory = (lowStockOnly = false, includeExpired = false) => {
   const [inventory, setInventory] = useState<(InventoryItem & { product?: Product })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -388,10 +420,22 @@ export const useInventory = (lowStockOnly = false) => {
         return { ...item, product };
       });
       
+      // Filter by conditions
+      let filteredInventory = fullInventory;
+      
       // Filter for low stock if requested
-      const filteredInventory = lowStockOnly 
-        ? fullInventory.filter(item => item.quantity <= item.lowStockThreshold)
-        : fullInventory;
+      if (lowStockOnly) {
+        filteredInventory = filteredInventory.filter(item => item.quantity <= item.lowStockThreshold);
+      }
+      
+      // Filter for expired products
+      if (!includeExpired) {
+        const today = new Date();
+        filteredInventory = filteredInventory.filter(item => {
+          if (!item.expiryDate) return true; // Items without expiry date are included
+          return new Date(item.expiryDate) > today;
+        });
+      }
       
       setInventory(filteredInventory);
       setError(null);
@@ -405,7 +449,7 @@ export const useInventory = (lowStockOnly = false) => {
 
   useEffect(() => {
     fetchInventory();
-  }, [lowStockOnly]);
+  }, [lowStockOnly, includeExpired]);
 
   const updateInventoryItem = async (item: InventoryItem) => {
     try {
@@ -417,7 +461,24 @@ export const useInventory = (lowStockOnly = false) => {
     }
   };
 
-  return { inventory, loading, error, updateInventoryItem, refresh: fetchInventory };
+  const addInventoryBatch = async (item: InventoryItem) => {
+    try {
+      await addItem<InventoryItem>('inventory', item);
+      fetchInventory();
+    } catch (err) {
+      console.error('Error adding inventory batch:', err);
+      throw err;
+    }
+  };
+
+  return { 
+    inventory, 
+    loading, 
+    error, 
+    updateInventoryItem, 
+    addInventoryBatch, 
+    refresh: fetchInventory 
+  };
 };
 
 // Custom hook for retrieving and managing bills
