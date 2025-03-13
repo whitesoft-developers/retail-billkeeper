@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Product, useInventory } from '@/lib/db';
 import InventoryBatchList from './InventoryBatchList';

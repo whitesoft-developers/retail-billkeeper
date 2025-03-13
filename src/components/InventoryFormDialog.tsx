@@ -29,6 +29,7 @@ const InventoryFormDialog = ({
     quantity: 0,
     location: '',
     lowStockThreshold: 5,
+    batchId: `BATCH-${Date.now().toString().slice(-6)}`
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,6 +40,7 @@ const InventoryFormDialog = ({
         quantity: inventoryItem.quantity,
         location: inventoryItem.location,
         lowStockThreshold: inventoryItem.lowStockThreshold,
+        batchId: inventoryItem.batchId
       });
     } else if (productId) {
       // Reset form when adding new inventory for a product
@@ -47,6 +49,7 @@ const InventoryFormDialog = ({
         quantity: 0,
         location: '',
         lowStockThreshold: 5,
+        batchId: `BATCH-${Date.now().toString().slice(-6)}`
       });
     }
   }, [inventoryItem, productId, open]);
@@ -117,6 +120,18 @@ const InventoryFormDialog = ({
               value={formData.location}
               onChange={handleChange}
               placeholder="e.g. Shelf A-1"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="batchId">Batch ID</Label>
+            <Input
+              id="batchId"
+              name="batchId"
+              value={formData.batchId}
+              onChange={handleChange}
+              placeholder="Enter batch ID"
               required
             />
           </div>

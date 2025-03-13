@@ -83,7 +83,7 @@ const InventoryBatchList = ({ inventoryItems, product, onEditInventory, onRefres
                       </Badge>
                     )}
                     {expiryStatus.status === 'expiring-soon' && (
-                      <Badge variant="warning" className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />
                         {expiryStatus.label}
                       </Badge>

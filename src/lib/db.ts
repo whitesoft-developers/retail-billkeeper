@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -57,7 +58,7 @@ export const initDatabase = async () => {
         billsStore.createIndex('billNumber', 'billNumber', { unique: true });
       } else if (oldVersion < 2) {
         // Add billNumber index if upgrading
-        const transaction = event.target.transaction;
+        const transaction = (event.target as IDBOpenDBRequest).transaction;
         const billsStore = transaction?.objectStore('bills');
         if (billsStore && !billsStore.indexNames.contains('billNumber')) {
           billsStore.createIndex('billNumber', 'billNumber', { unique: true });

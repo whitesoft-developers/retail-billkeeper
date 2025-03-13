@@ -42,16 +42,12 @@ const Billing = () => {
   const [insightPeriod, setInsightPeriod] = useState<'day' | 'week' | 'month' | 'year' | 'custom'>('month');
   
   const printBillRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-    documentTitle: "Bill Receipt",
-    onBeforeGetContent: () => {
-      return Promise.resolve();
-    },
+  const { handlePrint, isPrinting } = useReactToPrint({
+    documentTitle: 'Bill Receipt',
     onAfterPrint: () => {
-      console.log("Printed successfully");
+      console.log('Print completed');
     },
-    removeAfterPrint: true,
-    content: () => printBillRef.current
+    removeAfterPrint: true
   });
   
   const generateBillNumber = () => {
@@ -260,7 +256,7 @@ const Billing = () => {
         if (paymentMethod !== 'upi' || (paymentMethod === 'upi' && showQRCode)) {
           handlePrint();
         }
-      }, 500);
+      }, 100);
     } catch (error) {
       console.error("Error creating bill:", error);
       toast.error("Failed to create bill");
