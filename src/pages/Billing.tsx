@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -146,13 +147,15 @@ const Billing = () => {
     navigate(0);
   };
 
-  const { ref: printRef, print } = useReactToPrint({
+  // Fix: Updated useReactToPrint implementation
+  const handlePrint = useReactToPrint({
     documentTitle: `Invoice-${billData.billNumber || ''}`,
     onAfterPrint: () => {
       // Handle post-print actions
       setBillPrinted(true);
       setPrintDialogOpen(false);
     },
+    // Fix: Use content prop correctly
     content: () => componentRef.current,
   });
 
@@ -193,12 +196,12 @@ const Billing = () => {
 
       if (printOnSave) {
         setPrintDialogOpen(true);
-        // Use a timeout with a numeric value instead of a boolean
+        // Fix: Use a numeric timeout value
         setTimeout(() => {
-          print();
+          handlePrint();
         }, 300); // 300ms delay to allow dialog to render
       } else {
-        // Use a timeout with a numeric value
+        // Fix: Use a numeric timeout value
         setTimeout(() => {
           resetBill();
         }, 300); // 300ms delay
@@ -229,7 +232,7 @@ const Billing = () => {
               </div>
               <div>
                 <Label htmlFor="categoryFilter">Category Filter</Label>
-                <Select onValueChange={setCategoryFilter}>
+                <Select onValueChange={(value) => setCategoryFilter(value)}>
                   <SelectTrigger id="categoryFilter" className="w-full">
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
@@ -333,7 +336,8 @@ const Billing = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="paymentMethod">Payment Method</Label>
-                <Select onValueChange={setPaymentMethod}>
+                {/* Fix: Cast the string value to the correct type */}
+                <Select onValueChange={(value) => setPaymentMethod(value as 'cash' | 'upi' | 'card')}>
                   <SelectTrigger id="paymentMethod" className="w-full">
                     <SelectValue placeholder="Select Payment Method" />
                   </SelectTrigger>
