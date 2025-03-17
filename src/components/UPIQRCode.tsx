@@ -3,17 +3,18 @@ import { useState, useEffect } from 'react';
 import { generateUPIQRCode, UPIPayment } from '@/lib/upiUtils';
 import { Card } from '@/components/ui/card';
 import { useStoreSettings } from '@/lib/db';
-import { IndianRupee, Copy, CheckCircle2 } from 'lucide-react';
+import { IndianRupee, Copy, CheckCircle2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 interface UPIQRCodeProps {
   amount: number;
-  billId?: number;
+  billId?: number | string;
+  onPaymentComplete?: () => void;
 }
 
-const UPIQRCode = ({ amount, billId }: UPIQRCodeProps) => {
+const UPIQRCode = ({ amount, billId, onPaymentComplete }: UPIQRCodeProps) => {
   const { storeInfo } = useStoreSettings();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,24 @@ const UPIQRCode = ({ amount, billId }: UPIQRCodeProps) => {
     }
   };
 
+  const downloadQRCode = () => {
+    if (qrCodeDataUrl) {
+      const link = document.createElement('a');
+      link.href = qrCodeDataUrl;
+      link.download = `upi-payment-${amount}-${new Date().getTime()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('QR code downloaded');
+    }
+  };
+
+  const handlePaymentCompleted = () => {
+    if (onPaymentComplete) {
+      onPaymentComplete();
+    }
+  };
+
   if (!storeInfo?.upiId) {
     return (
       <Card className="p-4 text-center">
@@ -89,6 +108,29 @@ const UPIQRCode = ({ amount, billId }: UPIQRCodeProps) => {
               />
             </div>
           )}
+        </div>
+        
+        <div className="mt-4 flex items-center justify-center space-x-2">
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={downloadQRCode}
+            disabled={loading}
+          >
+            <Download className="h-4 w-4" />
+            Download
+          </Button>
+          
+          <Button 
+            type="button" 
+            variant="default" 
+            size="sm"
+            onClick={handlePaymentCompleted}
+          >
+            Payment Complete
+          </Button>
         </div>
         
         <div className="mt-4 flex flex-col items-center space-y-2">

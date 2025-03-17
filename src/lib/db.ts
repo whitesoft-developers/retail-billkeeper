@@ -71,38 +71,13 @@ export const initDatabase = async () => {
         const settingsStore = db.createObjectStore('settings', { keyPath: 'id' });
       }
       
-      // Add example data (for development only)
+      // Add default settings only (no sample products)
       if (oldVersion === 0) {
         const dbTransaction = (event.target as IDBOpenDBRequest).transaction;
         
         if (dbTransaction) {
-          const productStore = dbTransaction.objectStore('products');
-          const inventoryStore = dbTransaction.objectStore('inventory');
           const settingsStore = dbTransaction.objectStore('settings');
 
-          // Add sample products and inventory
-          [
-            { id: 1, name: 'Paracetamol', category: 'medical', price: 15.50, barcode: '8901234567890', hsn: '30049099', cgst: 9, sgst: 9 },
-            { id: 2, name: 'USB Cable', category: 'electronics', price: 199.99, barcode: '8901234567891', hsn: '85444999', cgst: 9, sgst: 9 },
-            { id: 3, name: 'Rice 1kg', category: 'grocery', price: 60.00, barcode: '8901234567892', hsn: '10063090', cgst: 5, sgst: 5 },
-          ].forEach(product => {
-            productStore.add(product);
-            
-            // Add inventory entry for each product
-            const today = new Date();
-            const expiryDate = new Date();
-            expiryDate.setMonth(today.getMonth() + 6); // 6 months expiry for sample
-            
-            inventoryStore.add({
-              productId: product.id,
-              quantity: Math.floor(Math.random() * 50) + 5,
-              location: `Shelf ${String.fromCharCode(65 + Math.floor(Math.random() * 5))}-${Math.floor(Math.random() * 10) + 1}`,
-              lowStockThreshold: 10,
-              batchId: 'BATCH-' + Math.floor(Math.random() * 1000),
-              expiryDate: expiryDate
-            });
-          });
-          
           // Add default settings
           settingsStore.add({
             id: 'storeInfo',
