@@ -27,7 +27,7 @@ const BillHistory = () => {
 
   const handlePrint = useReactToPrint({
     documentTitle: `Invoice-${selectedBill?.billNumber || selectedBill?.id}`,
-    content: () => printRef.current,
+    contentRef: () => printRef.current,
   });
 
   const handleDownloadPDF = async () => {
@@ -129,7 +129,11 @@ const BillHistory = () => {
                   </p>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handlePrint()}
+                  >
                     <Printer className="h-4 w-4 mr-2" />
                     Print
                   </Button>
