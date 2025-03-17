@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -153,8 +152,7 @@ const Billing = () => {
       setBillPrinted(true);
       setPrintDialogOpen(false);
     },
-    // Fix: The correct property to use is 'content', not 'contentRef'
-    content: () => componentRef.current,
+    documentRef: componentRef,
   });
 
   const handleCreateBill = async () => {
