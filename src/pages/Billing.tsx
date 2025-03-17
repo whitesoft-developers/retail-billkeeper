@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import BillPrint from '@/components/BillPrint';
 
 interface ProductRowProps {
   product: Product;
@@ -60,7 +60,6 @@ const Billing = () => {
   const [billNumber, setBillNumber] = useState<string | null>(null);
 
   useEffect(() => {
-    // Generate a unique bill number on component mount
     const generateBillNumber = () => {
       const now = Date.now().toString();
       const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
@@ -147,16 +146,13 @@ const Billing = () => {
     navigate(0);
   };
 
-  // Fix: Updated useReactToPrint implementation
   const handlePrint = useReactToPrint({
     documentTitle: `Invoice-${billData.billNumber || ''}`,
     onAfterPrint: () => {
-      // Handle post-print actions
       setBillPrinted(true);
       setPrintDialogOpen(false);
     },
-    // Fix: Use content prop correctly
-    content: () => componentRef.current,
+    contentRef: componentRef
   });
 
   const handleCreateBill = async () => {
@@ -196,15 +192,13 @@ const Billing = () => {
 
       if (printOnSave) {
         setPrintDialogOpen(true);
-        // Fix: Use a numeric timeout value
         setTimeout(() => {
           handlePrint();
-        }, 300); // 300ms delay to allow dialog to render
+        }, 300);
       } else {
-        // Fix: Use a numeric timeout value
         setTimeout(() => {
           resetBill();
-        }, 300); // 300ms delay
+        }, 300);
       }
     } catch (error) {
       console.error('Error creating bill:', error);
@@ -336,7 +330,6 @@ const Billing = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="paymentMethod">Payment Method</Label>
-                {/* Fix: Cast the string value to the correct type */}
                 <Select onValueChange={(value) => setPaymentMethod(value as 'cash' | 'upi' | 'card')}>
                   <SelectTrigger id="paymentMethod" className="w-full">
                     <SelectValue placeholder="Select Payment Method" />
@@ -395,7 +388,6 @@ const Billing = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Print Preview */}
       <div style={{ display: 'none' }}>
         <div ref={componentRef} className="p-4">
           <div className="text-center mb-4">
