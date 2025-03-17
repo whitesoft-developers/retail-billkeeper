@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -163,7 +164,7 @@ const Billing = () => {
       setBillPrinted(true);
       setPrintDialogOpen(false);
     },
-    contentRef: () => componentRef.current,
+    contentRef: componentRef,
   });
 
   const handleCreateBill = async () => {

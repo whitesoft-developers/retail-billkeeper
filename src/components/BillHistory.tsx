@@ -27,7 +27,7 @@ const BillHistory = () => {
 
   const handlePrint = useReactToPrint({
     documentTitle: `Invoice-${selectedBill?.billNumber || selectedBill?.id}`,
-    contentRef: () => printRef.current,
+    contentRef: printRef,
   });
 
   const handleDownloadPDF = async () => {
