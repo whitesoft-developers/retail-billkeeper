@@ -152,7 +152,7 @@ const Billing = () => {
       setBillPrinted(true);
       setPrintDialogOpen(false);
     },
-    content: () => componentRef.current,
+    contentRef: componentRef,
   });
 
   const handleCreateBill = async () => {
