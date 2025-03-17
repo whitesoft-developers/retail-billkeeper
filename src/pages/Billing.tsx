@@ -33,7 +33,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onAdd }) => {
 
 const Billing = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [billItems, setBillItems] = useState<BillItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -52,7 +52,10 @@ const Billing = () => {
   });
   
   const navigate = useNavigate();
-  const { products, loading, error } = useProducts({ query: searchQuery, category: categoryFilter });
+  const { products, loading, error } = useProducts({ 
+    query: searchQuery, 
+    category: categoryFilter === 'all' ? '' : categoryFilter 
+  });
   const { addBill } = useBills();
   const { storeInfo } = useStoreSettings();
   const componentRef = useRef<HTMLDivElement>(null);
@@ -226,12 +229,12 @@ const Billing = () => {
               </div>
               <div>
                 <Label htmlFor="categoryFilter">Category Filter</Label>
-                <Select onValueChange={(value) => setCategoryFilter(value)}>
+                <Select onValueChange={(value) => setCategoryFilter(value)} defaultValue="all">
                   <SelectTrigger id="categoryFilter" className="w-full">
-                    <SelectValue placeholder="All Categories" />
+                    <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     <SelectItem value="electronics">Electronics</SelectItem>
                     <SelectItem value="grocery">Grocery</SelectItem>
                     <SelectItem value="medical">Medical</SelectItem>
