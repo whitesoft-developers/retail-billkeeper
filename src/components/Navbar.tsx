@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LayoutGrid, Receipt, Package2, Settings } from 'lucide-react';
+import { LayoutGrid, Receipt, ReceiptText, Package2, Settings } from 'lucide-react';
 import { useStoreSettings } from '@/lib/db';
 
 const Navbar = () => {
@@ -23,6 +23,7 @@ const Navbar = () => {
   const navLinks = [
     { path: '/', label: 'Dashboard', icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
     { path: '/billing', label: 'Billing', icon: <Receipt className="h-4 w-4 mr-2" /> },
+    { path: '/bill-history', label: 'History', icon: <ReceiptText className="h-4 w-4 mr-2" /> },
     { path: '/inventory', label: 'Inventory', icon: <Package2 className="h-4 w-4 mr-2" /> },
     { path: '/settings', label: 'Settings', icon: <Settings className="h-4 w-4 mr-2" /> }
   ];
